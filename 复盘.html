@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Divination Master V13 (Final)</title>
+    <style>
+        :root {
+            /* --- 亮色模式 --- */
+            --bg: #FFFFFF;
+            --panel-bg: #F9FAFB;
+            --text-main: #222;
+            --text-sub: #888;
+            --border: #E5E7EB;
+            --accent: #111;
+            --btn-text: #FFF;
+            --card-bg: #FFF;
+            
+            /* 状态颜色 */
+            --st-yes-bg: #DEF7EC; --st-yes-text: #03543F;
+            --st-no-bg: #FDE8E8; --st-no-text: #9B1C1C;
+            --st-wait-bg: #F3F4F6; --st-wait-text: #6B7280;
+
+            /* 体系标签 */
+            --len-tag: #E0F2FE; --len-text: #0369A1;
+            --tar-tag: #F3E8FF; --tar-text: #7E22CE;
+            
+            /* 牌面背景 */
+            --len-card-bg: #F0F9FF;
+            --tar-card-bg: #FAF5FF;
+        }
+
+        /* --- 深色模式 --- */
+        body.dark {
+            --bg: #121212;
+            --panel-bg: #1E1E1E;
+            --text-main: #E0E0E0;
+            --text-sub: #888;
+            --border: #333;
+            --accent: #000;
+            --btn-text: #FFF;
+            --card-bg: #2C2C2C;
+            
+            --st-yes-bg: #064E3B; --st-yes-text: #6EE7B7;
+            --st-no-bg: #7F1D1D; --st-no-text: #FCA5A5;
+            --st-wait-bg: #374151; --st-wait-text: #D1D5DB;
+            
+            --len-tag: #0c4a6e; --len-text: #bae6fd;
+            --tar-tag: #581c87; --tar-text: #e9d5ff;
+            
+            --len-card-bg: #1e293b;
+            --tar-card-bg: #2e1065;
+            
+            color-scheme: dark; 
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0; padding: 0; height: 100vh;
+            display: flex; color: var(--text-main);
+            background: var(--bg); overflow: hidden;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* --- 布局系统 --- */
+        .container { display: flex; width: 100%; height: 100%; }
+        
+        .pane-left {
+            width: 50%; min-width: 320px;
+            display: flex; flex-direction: column;
+            background: var(--bg); padding: 30px 40px; box-sizing: border-box;
+            overflow-y: auto; border-right: 1px solid var(--border);
+        }
+
+        .resizer {
+            width: 5px; background: transparent; cursor: col-resize; z-index: 10;
+        }
+        .resizer:hover { background: var(--text-sub); opacity: 0.3; }
+
+        .pane-right {
+            flex: 1; min-width: 320px;
+            background: var(--panel-bg); padding: 30px 40px; box-sizing: border-box;
+            overflow-y: auto; display: flex; flex-direction: column;
+        }
+
+        /* --- 控件样式 --- */
+        h2 { 
+            font-size: 16px; font-weight: 800; border-bottom: 2px solid var(--border); 
+            margin: 0 0 25px 0; padding-bottom: 10px; 
+            display: flex; justify-content: space-between; align-items: center; letter-spacing: 1px; 
+        }
+
+        .form-row { margin-bottom: 20px; }
+        label { display: block; font-size: 11px; font-weight: 700; color: var(--text-sub); margin-bottom: 6px; text-transform: uppercase; }
+        
+        input, textarea {
+            width: 100%; padding: 10px 0; border: none; border-bottom: 1px solid var(--border);
+            background: transparent; font-family: inherit; font-size: 14px; color: var(--text-main);
+            transition: border 0.2s; border-radius: 0;
+        }
+        input:focus, select:focus, textarea:focus { outline: none; border-bottom: 1px solid #888; }
+        textarea { resize: vertical; min-height: 40px; }
+
+        select {
+            width: 100%; padding: 10px 0; border: none; border-bottom: 1px solid var(--border);
+            background: transparent; font-family: inherit; font-size: 14px; color: var(--text-main);
+            border-radius: 0; cursor: pointer;
+        }
+        body.dark select { background-color: #000; color: #FFF; }
+        body.dark select option { background-color: #000; color: #FFF; }
+        body.dark select option:checked, body.dark select option:hover { background-color: #333 !important; color: #FFF !important; }
+
+        .search-box {
+            width: 180px !important; font-size: 12px; padding: 6px 12px !important;
+            border: 1px solid var(--border) !important; border-radius: 20px !important;
+            background: var(--bg) !important; color: var(--text-main) !important;
+        }
+
+        .top-btns { display: flex; gap: 10px; align-items: center; }
+        .icon-btn { cursor: pointer; background: none; border: none; font-size: 16px; padding: 5px; color: var(--text-main); }
+
+        .sys-tabs { display: flex; gap: 15px; margin-bottom: 5px; }
+        .sys-tab {
+            cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-sub);
+            padding: 6px 12px; border-radius: 4px; background: var(--panel-bg); transition: 0.2s; border: 1px solid transparent;
+        }
+        .sys-tab.active { color: var(--bg); background: var(--text-main); }
+
+        .btn { 
+            background: var(--accent); color: var(--btn-text); 
+            border: 1px solid var(--border); padding: 12px; width: 100%; font-weight: 700; cursor: pointer; 
+            border-radius: 4px; margin-top: 20px; transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.9; }
+
+        /* --- 网格系统 --- */
+        .grid-wrapper {
+            background: var(--panel-bg); border: 1px dashed var(--border); border-radius: 8px;
+            padding: 20px; min-height: 200px;
+            display: flex; justify-content: center; align-items: center;
+            overflow-x: auto; margin-bottom: 20px;
+        }
+
+        .card-box {
+            background: var(--card-bg); border: 1px solid var(--border);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 60px; height: 85px; position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        /* 空白占位符 (关键：保持布局但不显示) */
+        .card-box.empty-slot {
+            visibility: hidden; border: none !important; background: transparent !important; box-shadow: none !important;
+        }
+
+        .box-label { 
+            font-size: 10px; color: var(--text-sub); position: absolute; top: 3px; width: 100%; text-align: center; font-weight: bold;
+        }
+        .box-input {
+            border: none; background: transparent; text-align: center; width: 90%; 
+            font-weight: bold; font-size: 12px; color: var(--text-main); margin-top: 10px;
+            border-bottom: 1px solid var(--border); padding: 2px 0;
+        }
+        .box-val { font-weight: bold; font-size: 11px; text-align: center; margin-top: 10px; width: 95%; word-break: break-all; color: var(--text-main); }
+
+        /* === 排阵布局 CSS === */
+        .layout-linear { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; width: 100%; }
+        .layout-grid-3x3 { display: grid; grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(3, 85px); gap: 6px; }
+        
+        .layout-choice-tb { display: grid; grid-template-columns: repeat(3, 64px); grid-template-rows: 85px 40px 85px; gap: 10px; }
+        .ch-top-1 { grid-column: 1; grid-row: 1; } .ch-top-2 { grid-column: 2; grid-row: 1; } .ch-top-3 { grid-column: 3; grid-row: 1; }
+        .ch-bot-1 { grid-column: 1; grid-row: 3; } .ch-bot-2 { grid-column: 2; grid-row: 3; } .ch-bot-3 { grid-column: 3; grid-row: 3; }
+
+        /* 十字阵 (修复：中间牌去掉特殊黑边框) */
+        .layout-len-cross { display: grid; grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(3, 85px); gap: 6px; }
+        .pos-top { grid-column: 2; grid-row: 1; } .pos-left { grid-column: 1; grid-row: 2; }
+        .pos-center { grid-column: 2; grid-row: 2; /* 已移除特殊边框 */ }
+        .pos-right { grid-column: 3; grid-row: 2; } .pos-bottom { grid-column: 2; grid-row: 3; }
+
+        .layout-len-h { display: grid; grid-template-columns: 64px 64px 64px; grid-template-rows: 85px 85px 85px; gap: 20px; }
+        .h-l1 { grid-column: 1; grid-row: 1; } .h-l2 { grid-column: 1; grid-row: 2; } .h-l3 { grid-column: 1; grid-row: 3; }
+        .h-r1 { grid-column: 3; grid-row: 1; } .h-r2 { grid-column: 3; grid-row: 2; } .h-r3 { grid-column: 3; grid-row: 3; }
+        .h-mid { grid-column: 2; grid-row: 2; }
+
+        .layout-gt { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; width: 100%; min-width: 550px; }
+        .layout-gt .card-box { width: auto; height: 55px; font-size: 10px; }
+        .gt-33 { grid-column: 3; grid-row: 5; } .gt-34 { grid-column: 4; grid-row: 5; } .gt-35 { grid-column: 5; grid-row: 5; } .gt-36 { grid-column: 6; grid-row: 5; }
+
+        /* 圣三角 (完美对称版) */
+        .layout-tri-inv { 
+            display: grid; 
+            grid-template-columns: 64px 60px 64px; 
+            grid-template-rows: 85px 85px; 
+            gap: 15px; justify-content: center;
+        }
+        .tri-top-l { grid-column: 1; grid-row: 1; } /* 左上 */
+        .tri-top-r { grid-column: 3; grid-row: 1; } /* 右上 */
+        .tri-bot { grid-column: 2; grid-row: 2; }   /* 正下 */
+
+        .layout-choice-v { display: grid; grid-template-columns: repeat(5, 64px); gap: 10px; }
+        .ch-1 { grid-column: 3; grid-row: 2; } .ch-2 { grid-column: 2; grid-row: 1; margin-top: 40px;} .ch-3 { grid-column: 4; grid-row: 1; margin-top: 40px;} .ch-4 { grid-column: 1; grid-row: 1; } .ch-5 { grid-column: 5; grid-row: 1; }
+
+        .layout-pyr4 { display: grid; grid-template-columns: repeat(3, 64px); gap: 10px; justify-content: center; }
+        .pyr-top { grid-column: 2; grid-row: 1; } .pyr-b1 { grid-column: 1; grid-row: 2; } .pyr-b2 { grid-column: 2; grid-row: 2; } .pyr-b3 { grid-column: 3; grid-row: 2; }
+
+        /* 六芒星 (修复：中间牌去掉特殊黑边框) */
+        .layout-hex { display: grid; grid-template-columns: repeat(3, 70px); grid-template-rows: repeat(3, 80px); gap: 10px; }
+        .hex-1 { grid-column: 2; grid-row: 1; } .hex-2 { grid-column: 3; grid-row: 2; margin-top: -30px; } .hex-3 { grid-column: 3; grid-row: 2; margin-top: 60px; } .hex-4 { grid-column: 2; grid-row: 3; } .hex-5 { grid-column: 1; grid-row: 2; margin-top: 60px; } .hex-6 { grid-column: 1; grid-row: 2; margin-top: -30px; } 
+        .hex-7 { grid-column: 2; grid-row: 2; /* 已移除特殊边框 */ }
+
+        .layout-cross5 { display: grid; grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(3, 90px); gap: 6px; }
+        .layout-rel-dev { display: flex; gap: 20px; justify-content: center; }
+
+        /* 自定义 6x5 (紧凑) */
+        .layout-custom-30 { display: grid; grid-template-columns: repeat(6, 45px); grid-template-rows: repeat(5, 65px); gap: 4px; }
+        .layout-custom-30 .card-box { width: 45px; height: 65px; font-size: 10px; }
+
+        /* --- 列表日志 --- */
+        .log-entry {
+            background: var(--card-bg); border: 1px solid var(--border);
+            border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            transition: all 0.2s; cursor: pointer; overflow: hidden;
+        }
+        .log-entry:hover { border-color: var(--text-sub); transform: translateY(-1px); }
+        .log-entry.expanded { box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-color: var(--text-main); }
+
+        .entry-header { padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; }
+        .entry-details { display: none; padding: 0 15px 15px 15px; border-top: 1px dashed var(--border); margin-top: 5px; padding-top: 15px;}
+        .log-entry.expanded .entry-details { display: block; }
+
+        .sys-tag { font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; margin-right: 8px; }
+        .tag-len { background: var(--len-tag); color: var(--len-text); }
+        .tag-tar { background: var(--tar-tag); color: var(--tar-text); }
+
+        .log-entry.type-len .card-box { background-color: var(--len-card-bg); border-color: #BFDBFE; }
+        .log-entry.type-tar .card-box { background-color: var(--tar-card-bg); border-color: #E9D5FF; }
+        
+        .entry-grid-view {
+            display: flex; justify-content: center; padding: 15px;
+            margin-bottom: 15px; pointer-events: none;
+            border: 1px solid var(--border); border-radius: 4px; background: var(--bg);
+        }
+
+        .status-badge { font-size: 12px; font-weight: bold; padding: 2px 8px; border-radius: 12px; }
+        .st-pending { background: var(--st-wait-bg); color: var(--st-wait-text); }
+        .st-yes { background: var(--st-yes-bg); color: var(--st-yes-text); }
+        .st-no { background: var(--st-no-bg); color: var(--st-no-text); }
+
+        .del-btn { border:none; background:none; color:var(--text-sub); cursor:pointer; font-size:12px; margin-left:8px;}
+        .del-btn:hover { color:red; }
+        .toggle-icon { font-size: 10px; color: var(--text-sub); transition: transform 0.2s; margin-left: 10px; }
+        .log-entry.expanded .toggle-icon { transform: rotate(180deg); }
+        .action-link { font-size:11px; color:var(--text-sub); cursor:pointer; text-decoration:underline; margin-left:8px; }
+
+    </style>
+</head>
+<body class="">
+
+<div class="container" id="container">
+    <div class="pane-left" id="leftPane">
+        <h2>
+            <div class="top-btns">
+                <span>新增记录</span>
+                <button class="icon-btn" onclick="toggleTheme()" title="切换黑白模式">🌓</button>
+            </div>
+            <button onclick="clearForm()" style="font-size:11px; padding:4px 8px; border:1px solid var(--border); background:none; cursor:pointer; border-radius:4px; color:var(--text-main);">重置</button>
+        </h2>
+
+        <div class="form-row">
+            <label>占卜体系</label>
+            <div class="sys-tabs">
+                <div id="tabLen" class="sys-tab active" onclick="setSys('lenormand')">雷诺曼 (LENORMAND)</div>
+                <div id="tabTar" class="sys-tab" onclick="setSys('tarot')">塔罗 (TAROT)</div>
+            </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+            <div class="form-row">
+                <label>排阵选择</label>
+                <select id="spreadSelect" onchange="renderGrid()"></select>
+                <input type="text" id="customNameInput" placeholder="给排阵起个名..." style="display:none; margin-top:5px; border-bottom:1px dashed var(--text-sub); font-size:12px;">
+            </div>
+            <div class="form-row">
+                <label>日期</label>
+                <input type="date" id="dateInput">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <label>问题</label>
+            <input type="text" id="question" placeholder="请输入问题...">
+        </div>
+
+        <div class="form-row">
+            <label>排阵填牌 (Cards)</label>
+            <div id="gridContainer" class="grid-wrapper"></div>
+        </div>
+
+        <div class="form-row">
+            <label>初步解牌</label>
+            <textarea id="interp" placeholder="直觉与分析..."></textarea>
+        </div>
+
+        <button class="btn" onclick="addEntry()">保存记录 (确定提交)</button>
+    </div>
+
+    <div class="resizer" id="resizer"></div>
+
+    <div class="pane-right" id="rightPane">
+        <h2>
+            复盘日志
+            <div style="display:flex; align-items:center; gap:10px;">
+                <input type="text" class="search-box" placeholder="🔍 搜索..." onkeyup="searchLog(this.value)">
+                
+                <div style="font-size:11px; font-weight:normal; color:var(--text-sub);">
+                    准: <b id="accRate">0%</b>
+                    <span class="action-link" onclick="exportData()">备份</span>
+                    <label for="importFile" class="action-link" style="display:inline; margin-bottom:0; cursor:pointer;">导入</label>
+                    <input type="file" id="importFile" style="display:none" onchange="importData(this)">
+                </div>
+            </div>
+        </h2>
+        
+        <div id="logList"></div>
+        <div id="emptyMsg" style="text-align:center; color:var(--text-sub); margin-top:50px;">暂无记录</div>
+    </div>
+</div>
+
+<script>
+    const SPREADS = {
+        lenormand: {
+            'single': { name: '单张 (Single)', css: 'layout-linear', slots: [{l:'单张'}] },
+            'pair': { name: '二张 (Pair)', css: 'layout-linear', slots: [{l:''},{l:''}] },
+            'line3': { name: '三张 (Line 3)', css: 'layout-linear', slots: [{l:''},{l:''},{l:''}] },
+            'line5': { name: '五张 (Line 5)', css: 'layout-linear', slots: [{l:''},{l:''},{l:''},{l:''},{l:''}] },
+            'line7': { name: '七张 (Line 7)', css: 'layout-linear', slots: Array.from({length:7},()=>({l:''})) },
+            'box9': { name: '九宫格 (9 Box)', css: 'layout-grid-3x3', slots: Array.from({length:9},()=>({l:''})) },
+            'cross': { name: '十字阵 (Cross)', css: 'layout-len-cross', slots: [{l:'上',p:'pos-top'}, {l:'左',p:'pos-left'}, {l:'中',p:'pos-center'}, {l:'右',p:'pos-right'}, {l:'下',p:'pos-bottom'}] },
+            'choice': { name: '二选一', css: 'layout-choice-tb', slots: [{l:'A1',p:'ch-top-1'},{l:'A2',p:'ch-top-2'},{l:'A3',p:'ch-top-3'},{l:'B1',p:'ch-bot-1'},{l:'B2',p:'ch-bot-2'},{l:'B3',p:'ch-bot-3'}] },
+            'rel_h': { name: '关系阵 (H型)', css: 'layout-len-h', slots: [{l:'',p:'h-l1'}, {l:'',p:'h-l2'}, {l:'',p:'h-l3'}, {l:'',p:'h-r1'}, {l:'',p:'h-r2'}, {l:'',p:'h-r3'}, {l:'',p:'h-mid'}] },
+            'gt': { name: '大桌牌 (8x4+4)', css: 'layout-gt', slots: [...Array.from({length:32},()=>({l:''})), {l:'',p:'gt-33'}, {l:'',p:'gt-34'}, {l:'',p:'gt-35'}, {l:'',p:'gt-36'}] },
+            'custom': { name: '其他 (自定义 6x5)', css: 'layout-custom-30', slots: Array.from({length:30},()=>({l:''})) }
+        },
+        tarot: {
+            'single': { name: '单张 (Single)', css: 'layout-linear', slots: [{l:'单张'}] },
+            'time3': { name: '时间流 (Time 3)', css: 'layout-linear', slots: [{l:'过去'},{l:'现在'},{l:'未来'}] },
+            'triangle': { name: '圣三角 (倒三角)', css: 'layout-tri-inv', slots: [{l:'',p:'tri-top-l'}, {l:'',p:'tri-top-r'}, {l:'',p:'tri-bot'}] },
+            'cross5': { name: '大十字 (5张)', css: 'layout-len-cross', slots: [{l:'中',p:'pos-center'}, {l:'左',p:'pos-left'}, {l:'上',p:'pos-top'}, {l:'右',p:'pos-right'}, {l:'下',p:'pos-bottom'}] },
+            'choice_v': { name: '二选一 (V型)', css: 'layout-choice-v', slots: [{l:'现状',p:'ch-1'},{l:'A路',p:'ch-2'},{l:'A果',p:'ch-4'},{l:'B路',p:'ch-3'},{l:'B果',p:'ch-5'}] },
+            'lovers': { name: '恋人金字塔', css: 'layout-pyr4', slots: [{l:'',p:'pyr-top'},{l:'',p:'pyr-b1'},{l:'',p:'pyr-b2'},{l:'',p:'pyr-b3'}] }, 
+            'hex': { name: '六芒星 (Hexagram)', css: 'layout-hex', slots: [{l:'',p:'hex-1'}, {l:'',p:'hex-2'}, {l:'',p:'hex-3'}, {l:'',p:'hex-4'}, {l:'',p:'hex-5'}, {l:'',p:'hex-6'}, {l:'',p:'hex-7'}] },
+            'rel_dev': { name: '关系发展', css: 'layout-rel-dev', slots: [{l:'你'},{l:'对方'},{l:'关系'},{l:'未来'}] },
+            'custom': { name: '其他 (自定义 6x5)', css: 'layout-custom-30', slots: Array.from({length:30},()=>({l:''})) }
+        }
+    };
+
+    let db = JSON.parse(localStorage.getItem('div_master_v13')) || [];
+    let curSys = 'lenormand';
+    
+    document.getElementById('dateInput').valueAsDate = new Date();
+    if(localStorage.getItem('theme')==='dark') document.body.classList.add('dark');
+    setSys('lenormand'); renderList();
+
+    function setSys(s) {
+        curSys = s;
+        document.querySelectorAll('.sys-tab').forEach(el => el.classList.remove('active'));
+        document.getElementById(s === 'lenormand' ? 'tabLen' : 'tabTar').classList.add('active');
+        const sel = document.getElementById('spreadSelect');
+        sel.innerHTML = '';
+        for(let k in SPREADS[s]) {
+            let opt = document.createElement('option');
+            opt.value = k; opt.innerText = SPREADS[s][k].name;
+            sel.appendChild(opt);
+        }
+        renderGrid();
+    }
+
+    function renderGrid() {
+        const type = document.getElementById('spreadSelect').value;
+        const container = document.getElementById('gridContainer');
+        const cfg = SPREADS[curSys][type];
+        document.getElementById('customNameInput').style.display = (type === 'custom') ? 'block' : 'none';
+
+        let html = `<div class="${cfg.css}">`;
+        cfg.slots.forEach((s, idx) => {
+            const style = s.s ? `style="${s.s}"` : '';
+            const storeId = s.id || (idx + 1).toString();
+            html += `
+                <div class="card-box ${s.p||''}" ${style}>
+                    <div class="box-label">${s.l}</div>
+                    <input class="box-input" data-id="${storeId}" autocomplete="off">
+                </div>
+            `;
+        });
+        html += `</div>`;
+        container.innerHTML = html;
+    }
+
+    function addEntry() {
+        const d = document.getElementById('dateInput').value;
+        const q = document.getElementById('question').value;
+        const type = document.getElementById('spreadSelect').value;
+        const interp = document.getElementById('interp').value;
+        const customName = document.getElementById('customNameInput').value;
+        
+        const inputs = document.querySelectorAll('#gridContainer input');
+        let cards = {}, hasVal = false;
+        inputs.forEach(i => {
+            if(i.value.trim()) { cards[i.dataset.id] = i.value.trim(); hasVal = true; }
+        });
+
+        if(!q || !hasVal) { alert("请填写内容"); return; }
+
+        db.unshift({
+            id: Date.now(), sys: curSys, date: d, q, type, cards, interp, fb:'', rev:'', st:'pending', customName
+        });
+        save(); renderList(); clearForm();
+    }
+
+    function renderList(filter = "") {
+        const list = document.getElementById('logList');
+        list.innerHTML = '';
+        
+        const filteredDB = db.filter(r => {
+            if (!filter) return true;
+            const sName = r.customName || SPREADS[r.sys||'lenormand'][r.type]?.name || r.type;
+            const content = (r.q + r.date + r.interp + r.fb + r.rev + sName).toLowerCase();
+            return content.includes(filter.toLowerCase());
+        });
+
+        if(filteredDB.length === 0) document.getElementById('emptyMsg').style.display='block';
+        else document.getElementById('emptyMsg').style.display='none';
+
+        filteredDB.forEach(r => {
+            const def = SPREADS[r.sys||'lenormand'];
+            const cfg = def ? def[r.type] : null;
+            const spreadName = (r.type === 'custom' && r.customName) ? r.customName : (cfg ? cfg.name : r.type);
+            
+            // 智能网格渲染
+            let gridHtml = '';
+            if(cfg) {
+                gridHtml = `<div class="entry-grid-view"><div class="${cfg.css}">`;
+                cfg.slots.forEach((s, idx) => {
+                    const storeId = s.id || (idx + 1).toString();
+                    const val = r.cards[storeId];
+                    const hasVal = val && val.trim() !== '';
+                    
+                    let cardStyle = s.s ? `style="${s.s}"` : '';
+                    let isEmptyClass = '';
+                    
+                    if (r.type === 'custom' && !hasVal) {
+                        isEmptyClass = 'empty-slot';
+                    }
+                    else if (cfg.css.includes('layout-linear') && !hasVal) {
+                        return; 
+                    }
+                    
+                    gridHtml += `
+                        <div class="card-box ${s.p||''} ${isEmptyClass}" ${cardStyle}>
+                            <div class="box-label">${s.l}</div>
+                            <div class="box-val">${val||''}</div>
+                        </div>
+                    `;
+                });
+                gridHtml += `</div></div>`;
+            }
+
+            const sysLabel = r.sys==='tarot' ? '塔罗' : '雷诺曼';
+            const sysTagClass = r.sys==='tarot' ? 'tag-tar' : 'tag-len';
+            const cardColorClass = r.sys==='tarot' ? 'type-tar' : 'type-len';
+            
+            let stText = '待', stClass = 'st-pending';
+            if(r.st==='yes') { stText='准'; stClass='st-yes'; }
+            if(r.st==='no') { stText='偏'; stClass='st-no'; }
+
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${cardColorClass}`;
+            entry.onclick = (e) => toggleExpand(e, entry);
+            entry.innerHTML = `
+                <div class="entry-header">
+                    <div style="flex:1;">
+                        <span class="sys-tag ${sysTagClass}">${sysLabel}</span>
+                        <span style="font-size:12px; font-weight:bold; margin-right:10px;">${r.date}</span>
+                        <span style="font-size:12px; color:var(--text-sub);">${spreadName}</span>
+                    </div>
+                    <div style="flex:2; font-size:14px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 10px;">${r.q}</div>
+                    <div style="display:flex; align-items:center;">
+                        <span class="status-badge ${stClass}" onclick="event.stopPropagation(); cyc(${r.id})">${stText}</span>
+                        <button class="del-btn" onclick="event.stopPropagation(); del(${r.id})">🗑️</button>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                </div>
+                <div class="entry-details" onclick="event.stopPropagation()">
+                    ${gridHtml}
+                    <div style="margin-bottom:15px; border-bottom:1px solid var(--border); padding-bottom:10px;">
+                        <label>解牌</label>
+                        <div style="font-size:13px; color:var(--text-main); line-height:1.6; white-space:pre-wrap;">${r.interp || '无记录'}</div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+                        <div><label>反馈</label><textarea onchange="upd(${r.id},'fb',this.value)">${r.fb||''}</textarea></div>
+                        <div><label>复盘</label><textarea onchange="upd(${r.id},'rev',this.value)">${r.rev||''}</textarea></div>
+                    </div>
+                </div>
+            `;
+            list.appendChild(entry);
+        });
+        updStat();
+    }
+
+    function toggleExpand(e, el) {
+        if(e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+        el.classList.toggle('expanded');
+    }
+    function searchLog(v) { renderList(v); }
+    function upd(id,k,v){ const i=db.find(r=>r.id===id); if(i){i[k]=v;save();} }
+    function cyc(id){ const i=db.find(r=>r.id===id); if(i){ i.st=i.st==='pending'?'yes':(i.st==='yes'?'no':'pending'); save(); renderList(document.querySelector('.search-box').value); } }
+    function del(id){ if(confirm('删除?')){db=db.filter(r=>r.id!==id);save();renderList(document.querySelector('.search-box').value);} }
+    function save(){ localStorage.setItem('div_master_v13', JSON.stringify(db)); updStat(); }
+    function updStat(){ const t=db.length, c=db.filter(r=>r.st==='yes').length, v=c+db.filter(r=>r.st==='no').length; document.getElementById('accRate').innerText=(v>0?Math.round(c/v*100):0)+'%'; }
+    function clearForm(){ 
+        document.getElementById('question').value=''; document.getElementById('interp').value=''; 
+        document.getElementById('customNameInput').value=''; renderGrid(); 
+    }
+    function exportData(){
+        const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(db)],{type:"json"}));
+        a.download=`Divination_Backup_${new Date().toISOString().slice(0,10)}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);
+    }
+    function importData(input) {
+        const file = input.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const imported = JSON.parse(e.target.result);
+                if (Array.isArray(imported)) {
+                    const currentIds = new Set(db.map(r => r.id));
+                    let newCount = 0;
+                    imported.forEach(r => { if (!currentIds.has(r.id)) { db.push(r); newCount++; } });
+                    db.sort((a, b) => b.id - a.id);
+                    save(); renderList(); alert(`成功导入 ${newCount} 条新记录`);
+                }
+            } catch (err) { alert("文件错误"); }
+        };
+        reader.readAsText(file);
+        input.value = '';
+    }
+    function toggleTheme() {
+        document.body.classList.toggle('dark');
+        localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+    }
+
+    const resizer = document.getElementById('resizer'); const leftPane = document.getElementById('leftPane'); const container = document.getElementById('container'); let isResizing = false;
+    resizer.addEventListener('mousedown', (e) => { isResizing = true; document.body.style.cursor = 'col-resize'; });
+    document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+        const newLeftWidth = (e.clientX / container.offsetWidth) * 100;
+        if (newLeftWidth > 20 && newLeftWidth < 80) leftPane.style.width = newLeftWidth + '%';
+    });
+    document.addEventListener('mouseup', () => { isResizing = false; document.body.style.cursor = 'default'; });
+</script>
+</body>
+</html>
